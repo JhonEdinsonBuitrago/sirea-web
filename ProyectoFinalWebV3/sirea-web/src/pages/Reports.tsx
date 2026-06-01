@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Download, FilePlus, Search } from 'lucide-react';
+import { ArrowRight, CheckCircle, Download, FilePlus, Search } from 'lucide-react';
 import { getAllIncidents } from '../services/incidents';
 import { Incident } from '../types';
 import Skeleton from '../components/Skeleton';
@@ -34,6 +34,7 @@ export default function Reports() {
   const [groupFilter, setGroupFilter] = useState('all');
   const [selectedGroupTitle, setSelectedGroupTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [exportStatus, setExportStatus] = useState<'idle' | 'done'>('idle');
 
   const { user, profile } = useAuth();
 
@@ -117,6 +118,8 @@ export default function Reports() {
     link.download = `reportes_sirea_${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+    setExportStatus('done');
+    setTimeout(() => setExportStatus('idle'), 2500);
   };
 
   return (
@@ -130,11 +133,18 @@ export default function Reports() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               onClick={handleExport}
-              disabled={filteredIncidents.length === 0}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={filteredIncidents.length === 0 || exportStatus === 'done'}
+              className={`inline-flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold transition ${
+                exportStatus === 'done'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50'
+              }`}
             >
-              <Download className="w-4 h-4" />
-              Exportar
+              {exportStatus === 'done' ? (
+                <><CheckCircle className="w-4 h-4" /> ¡Descargado!</>
+              ) : (
+                <><Download className="w-4 h-4" /> Exportar</>
+              )}
             </button>
             <Link
               to="/incidents/new"
