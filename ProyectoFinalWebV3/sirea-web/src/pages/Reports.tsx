@@ -35,22 +35,22 @@ export default function Reports() {
   const [selectedGroupTitle, setSelectedGroupTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
- const { user, profile } = useAuth();
+  const { user, profile } = useAuth();
 
-useEffect(() => {
-  if (!user || !profile) return;
+  useEffect(() => {
+    if (!user || !profile) return;
 
-  (async () => {
-    const { data, error } = await getAllIncidents();
+    (async () => {
+      const { data, error } = await getAllIncidents();
 
-    if (!error && data) {
-      const filtered = profile.rol !== 'admin' ? data.filter((incident) => incident.usuario_id === user.id) : data;
-      setIncidents(filtered);
-    }
+      if (!error && data) {
+        const filtered = profile.rol !== 'admin' ? data.filter((incident) => incident.usuario_id === user.id) : data;
+        setIncidents(filtered);
+      }
 
-    setLoading(false);
-  })();
-}, [user, profile]);
+      setLoading(false);
+    })();
+  }, [user, profile]);
 
   const filteredIncidents = useMemo(() => {
     return incidents.filter((incident) => {
@@ -58,7 +58,7 @@ useEffect(() => {
         return false;
       }
 
-    const groupId = incident.incident_groups?.id ?? incident.grupo_id;
+      const groupId = incident.incident_groups?.id ?? incident.grupo_id;
       const isGrouped = !!groupId;
 
       if (groupFilter === 'grouped' && !isGrouped) {
@@ -89,17 +89,50 @@ useEffect(() => {
     });
   }, [incidents, statusFilter, searchQuery, groupFilter, selectedGroupTitle]);
 
+  const handleExport = () => {
+    if (filteredIncidents.length === 0) return;
+
+    const headers = ['ID', 'Título', 'Tipo', 'Descripción', 'Estado', 'Ubicación', 'Salón', 'Grupo', 'Fecha'];
+
+    const rows = filteredIncidents.map((incident) => [
+      incident.id,
+      incident.titulo || incident.tipo || 'Sin título',
+      tipoLabels[incident.tipo] ?? incident.tipo,
+      incident.descripcion ?? '',
+      incident.estado === 'resuelto' ? 'Resuelto' : incident.estado === 'en_proceso' ? 'En proceso' : 'Reportado',
+      incident.ubicacion_texto ?? '',
+      incident.salon ?? '',
+      incident.incident_groups?.title ?? (incident.grupo_id ? 'Agrupado' : 'Sin grupo'),
+      incident.created_at ? new Date(incident.created_at).toLocaleDateString('es-CO') : '-',
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reportes_sirea_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">Gestión de incidentes</h1>
             <p className="mt-3 max-w-2xl text-sm text-slate-500">Revisa tus reportes, filtra por estado y accede a los detalles de cada caso.</p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+            <button
+              onClick={handleExport}
+              disabled={filteredIncidents.length === 0}
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               <Download className="w-4 h-4" />
               Exportar
             </button>
