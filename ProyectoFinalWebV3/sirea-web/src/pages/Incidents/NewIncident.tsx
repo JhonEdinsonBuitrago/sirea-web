@@ -33,6 +33,7 @@ export default function NewIncident() {
     register,
     handleSubmit,
     setValue,
+    reset,
     watch,
     formState: { errors }
   } = useForm<FormData>({
@@ -45,6 +46,7 @@ export default function NewIncident() {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [geoStatus, setGeoStatus] = useState<string>('Presiona el botón para obtener tu ubicación GPS.');
   const { user } = useAuth();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const selectedType = watch('tipo');
 
@@ -134,7 +136,13 @@ export default function NewIncident() {
       if (error) throw error;
 
       toast.success('Incidente reportado correctamente');
-      localStorage.removeItem(DRAFT_KEY); // Limpiar borrador al enviar
+      localStorage.removeItem(DRAFT_KEY);
+      reset({ titulo: '', tipo: 'infraestructura', descripcion: '', salon: '', ubicacion_texto: '' });
+      setFile(null);
+      setLocation(null);
+      setGeoStatus('Presiona el botón para obtener tu ubicación GPS.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: any) {
       toast.error(error?.message || 'No fue posible registrar el incidente');
     } finally {
@@ -278,6 +286,7 @@ export default function NewIncident() {
                 <span className="mt-2 max-w-xs text-xs leading-5 text-slate-400 sm:text-sm">En móvil puedes seleccionar una foto de tu galería o tomar una nueva desde la cámara.</span>
                 <input
                   id="upload"
+                  ref={fileInputRef}
                   type="file"
                   accept="image/png, image/jpeg, image/webp"
                   onChange={(event) => setFile(event.target.files?.[0] || null)}
