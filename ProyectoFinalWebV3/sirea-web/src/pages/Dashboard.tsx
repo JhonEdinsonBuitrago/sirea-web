@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Activity, CheckCircle2, FileText, ListChecks, ShieldAlert, Sparkles, TrendingUp, UserCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Incident } from '../types';
@@ -8,6 +8,7 @@ import Skeleton from '../components/Skeleton';
 
 export default function Dashboard() {
   const { profile, user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,6 +58,7 @@ useEffect(() => {
 
   })();
 }, [user, profile]);
+
   const counts = useMemo(() => {
     const total = incidents.length;
     const inProcess = incidents.filter((item) => item.estado === 'en_proceso').length;
@@ -298,7 +300,10 @@ useEffect(() => {
               ))}
             </div>
 
-            <button className="mt-6 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+            <button
+              onClick={() => navigate('/reports')}
+              className="mt-6 w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
               Ver historial completo
             </button>
           </aside>
