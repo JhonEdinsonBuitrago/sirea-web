@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { Building, Droplet, MapPin, Save, Shield, Sparkles, Zap, ArrowRight, UploadCloud } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 import { createIncident } from '../../services/incidents';
+
+const DRAFT_KEY = 'sirea_incident_draft';
 
 const schema = z.object({
   titulo: z.string().min(5, 'Ingrese un título para el incidente'),
@@ -45,6 +47,34 @@ export default function NewIncident() {
   const { user } = useAuth();
 
   const selectedType = watch('tipo');
+
+  // Cargar borrador al montar el componente
+  useEffect(() => {
+    const saved = localStorage.getItem(DRAFT_KEY);
+    if (saved) {
+      try {
+        const draft = JSON.parse(saved);
+        setValue('titulo', draft.titulo ?? '');
+        setValue('tipo', draft.tipo ?? 'infraestructura');
+        setValue('descripcion', draft.descripcion ?? '');
+        setValue('salon', draft.salon ?? '');
+        setValue('ubicacion_texto', draft.ubicacion_texto ?? '');
+        toast.info('Se recuperó un borrador guardado anteriormente.');
+      } catch {}
+    }
+  }, []);
+
+  const saveDraft = () => {
+    const values = {
+      titulo: watch('titulo'),
+      tipo: watch('tipo'),
+      descripcion: watch('descripcion'),
+      salon: watch('salon'),
+      ubicacion_texto: watch('ubicacion_texto'),
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(values));
+    toast.success('Borrador guardado correctamente.');
+  };
 
   const onSubmit = async (data: FormData) => {
     if (!file) {
@@ -104,6 +134,7 @@ export default function NewIncident() {
       if (error) throw error;
 
       toast.success('Incidente reportado correctamente');
+      localStorage.removeItem(DRAFT_KEY); // Limpiar borrador al enviar
     } catch (error: any) {
       toast.error(error?.message || 'No fue posible registrar el incidente');
     } finally {
@@ -149,6 +180,7 @@ export default function NewIncident() {
             <div className="grid gap-3 sm:flex sm:flex-row">
               <button
                 type="button"
+                onClick={saveDraft}
                 className="inline-flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:w-auto"
               >
                 <Save className="mr-2 h-4 w-4" />
