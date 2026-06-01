@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 0;
+  overflow-x: hidden;
+  background: #f8fafc;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* PRINT STYLES */
+.print-header { display: none; }
+.no-print { }
+
+@media print {
+  /* Hide non-printable elements */
+  .no-print { display: none !important; }
+
+  /* General page setup */
+  html, body { background: white !important; color: #000 !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Printable container spacing */
+  .print-container { padding: 0 !important; margin: 0 !important; }
+
+  /* Header shown only in print */
+  .print-header { display: block; margin-bottom: 8px; border-bottom: 1px solid #e5e7eb; padding-bottom: 8px; }
+  .print-header .title { font-size: 18px; font-weight: 700; color: #0f172a; }
+  .print-header .meta { font-size: 12px; color: #374151; }
+
+  /* Ensure cards and sections don't break across pages */
+  .print-card { break-inside: avoid; page-break-inside: avoid; -webkit-column-break-inside: avoid; }
+
+  /* Charts should scale and avoid overflow */
+  .print-container svg, .print-container canvas, .print-container img { max-width: 100% !important; height: auto !important; }
+
+  /* Remove shadows/borders that may print poorly */
+  .shadow-sm, .shadow-lg, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+
+  /* Remove rounded corners for better page use */
+  .rounded-\[32px\], .rounded-\[28px\], .rounded-3xl, .rounded-2xl { border-radius: 4px !important; }
+
+  /* Avoid printing focus outlines and interactive affordances */
+  a, button { text-decoration: none; }
+}
