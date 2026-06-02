@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Download, FilePlus, Search } from 'lucide-react';
 import { getAllIncidents } from '../services/incidents';
 import { Incident } from '../types';
@@ -37,6 +37,7 @@ export default function Reports() {
   const [exportStatus, setExportStatus] = useState<'idle' | 'done'>('idle');
 
   const { user, profile } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (!user || !profile) return;
@@ -52,6 +53,13 @@ export default function Reports() {
       setLoading(false);
     })();
   }, [user, profile]);
+
+  // Leer filtro desde URL params (ej: ?estado=en_proceso)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const estado = params.get('estado');
+    if (estado) setStatusFilter(estado);
+  }, [location.search]);
 
   const filteredIncidents = useMemo(() => {
     return incidents.filter((incident) => {

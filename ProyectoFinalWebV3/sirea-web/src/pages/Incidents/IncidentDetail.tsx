@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { Incident, Profile } from '../../types';
 import Skeleton from '../../components/Skeleton';
 import { toast } from 'sonner';
-import { ArrowRight, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 import { updateIncidentStatus } from '../../services/incidents';
 
@@ -16,6 +16,7 @@ const priorityLabels: Record<string, { label: string; color: string; subtitle: s
 
 export default function IncidentDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [incident, setIncident] = useState<Incident | null>(null);
   const [reporter, setReporter] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,6 +133,14 @@ export default function IncidentDetail() {
         <div className="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:rounded-[32px] sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-slate-900"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver
+              </button>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">Detalle del incidente</p>
               <h1 className="mt-3 break-words text-2xl font-semibold text-slate-900 sm:text-3xl">{incident.titulo ?? incident.tipo}</h1>
               <p className="mt-2 text-sm text-slate-500">Consulta la evidencia, ubicación y estado de seguimiento del reporte.</p>

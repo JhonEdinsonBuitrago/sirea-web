@@ -120,7 +120,7 @@ useEffect(() => {
         </div>
 
         <div className="mt-8 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <Link to="/reports" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-sky-300 hover:shadow-md block">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Total de reportes</p>
@@ -131,9 +131,9 @@ useEffect(() => {
               </div>
             </div>
             <div className="mt-4 text-sm text-slate-500">{counts.total > 0 ? `${counts.total} reporte${counts.total !== 1 ? 's' : ''} en total` : 'Sin datos previos'}</div>
-          </div>
+          </Link>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <Link to="/reports?estado=en_proceso" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-amber-300 hover:shadow-md block">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">En Proceso</p>
@@ -144,9 +144,9 @@ useEffect(() => {
               </div>
             </div>
             <div className="mt-4 text-sm text-slate-500">{counts.inProcess || 'Sin incidentes activos'}</div>
-          </div>
+          </Link>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <Link to="/reports?estado=resuelto" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md block">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500">Resueltos</p>
@@ -157,7 +157,7 @@ useEffect(() => {
               </div>
             </div>
             <div className="mt-4 text-sm text-slate-500">{counts.resolved || 'Aún no hay incidentes resueltos'}</div>
-          </div>
+          </Link>
         </div>
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[1.55fr_1fr]">
