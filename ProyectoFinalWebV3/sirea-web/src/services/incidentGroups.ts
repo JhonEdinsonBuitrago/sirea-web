@@ -48,34 +48,36 @@ export async function createIncidentGroupWithIncidents(
   const groupResult = await supabase
     .from('incident_groups')
     .insert({ title, description, status: 'reportado' })
-    .select('*')
-    .single();
+    .select('*');
 
-  if (groupResult.error || !groupResult.data) {
+  if (groupResult.error || !groupResult.data || groupResult.data.length === 0) {
     return { data: null, error: groupResult.error };
   }
 
+  const groupData = groupResult.data[0];
+
   const updateResult = await supabase
     .from('incidents')
-    .update({ grupo_id: groupResult.data.id })
+    .update({ grupo_id: groupData.id })
     .in('id', incidentIds);
 
   if (updateResult.error) {
-    await supabase.from('incident_groups').delete().eq('id', groupResult.data.id);
+    await supabase.from('incident_groups').delete().eq('id', groupData.id);
     return { data: null, error: updateResult.error };
   }
 
-  return { data: groupResult.data as IncidentGroup, error: null };
+  return { data: groupData as IncidentGroup, error: null };
 }
 
 export async function updateIncidentGroupStatus(groupId: string, status: Incident['estado']): Promise<{ data: IncidentGroup | null; error: any }> {
   // Actualizar directamente sin RPC
-  const { data, error } = await supabase
+  const { data: rows, error } = await supabase
     .from('incident_groups')
     .update({ status })
     .eq('id', groupId)
-    .select('*')
-    .single();
+    .select('*');
+  
+  const data = rows?.[0] ?? null;
 
   if (!error) {
     // Sincronizar estado en todos los incidentes del grupo
