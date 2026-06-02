@@ -95,10 +95,34 @@ export async function createIncidentGroupWithIncidents(
 }
 
 export async function updateIncidentGroupStatus(groupId: string, status: Incident['estado']): Promise<{ data: IncidentGroup | null; error: any }> {
-  const { data, error } = await supabase.rpc('update_incident_groups_status', {
+  // Primero intentamos con el RPC
+  const rpcResult = await supabase.rpc('update_incident_groups_status', {
     _group_id: groupId,
     _status: status
   });
+
+  if (!rpcResult.error) {
+    return { data: rpcResult.data as IncidentGroup | null, error: null };
+  }
+
+  console.warn('update_incident_groups_status RPC falló, usando actualización directa:', rpcResult.error);
+
+  // Fallback: actualizar directamente la tabla incident_groups (columna status)
+  // y sincronizar todos los incidentes del grupo
+  const { data, error } = await supabase
+    .from('incident_groups')
+    .update({ status })
+    .eq('id', groupId)
+    .select('*')
+    .single();
+
+  if (!error) {
+    // Sincronizar estado en todos los incidentes del grupo
+    await supabase
+      .from('incidents')
+      .update({ estado: status })
+      .eq('grupo_id', groupId);
+  }
 
   return { data: data as IncidentGroup | null, error };
 }
