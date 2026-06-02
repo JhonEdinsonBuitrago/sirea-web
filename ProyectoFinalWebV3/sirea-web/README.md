@@ -1,49 +1,107 @@
-# Sistema de Reporte de Incidentes — Universidad de la Amazonia
+# SIREA — Sistema de Reporte de Incidentes
 
-Proyecto generado por Copilot (arquitecto/ingeniero) — stack: React + Vite, TailwindCSS, Supabase.
+### Universidad de la Amazonia · Ingeniería de Sistemas 2026-I
 
-## Resumen
-Aplicación web para reportar y gestionar incidentes en la Universidad de la Amazonia.
+Aplicación web desarrollada con React + Vite, TailwindCSS y Supabase para reportar y gestionar incidentes dentro de las instalaciones de la Universidad de la Amazonia.
 
-## Requisitos
-- Node >= 18
+## Tecnologías utilizadas
+
+- **React 18** + **TypeScript** — interfaz de usuario
+- **Vite** — bundler y servidor de desarrollo
+- **TailwindCSS** — estilos y diseño responsivo
+- **Supabase** — base de datos, autenticación y almacenamiento
+- **Recharts** — gráficas y estadísticas
+- **React Router** — navegación
+- **Zod** + **React Hook Form** — validación de formularios
+
+## Requisitos previos
+
+- Node.js >= 18
 - npm o yarn
-- Cuenta Supabase con la URL y ANON KEY proporcionadas
+- Cuenta en Supabase con URL y ANON KEY
 
-## Variables de entorno
-Copiar `.env.example` a `.env` y rellenar:
+## Instalación y ejecución local
 
-VITE_SUPABASE_URL=https://kempjcbrugbwngivjofc.supabase.co
-VITE_SUPABASE_ANON_KEY=TU_ANON_KEY
-
-## Scripts
-- `npm install`
-- `npm run dev`
-- `npm run build`
-- `npm run preview`
-
-## Estructura
-- `src/` - código fuente
-- `sql/` - scripts SQL para tablas, triggers y RLS
-- `public/` - recursos públicos
-
-## Notas
-- El proyecto incluye SQL para crear `profiles` e `incidents`, triggers para sincronizar `auth.users` y políticas RLS.
-- Usa `sql/final_schema.sql` como script final para Supabase.
-
-## Documentación de seguridad y despliegue
-- Ver `docs/ARCHITECTURE_AND_SECURITY.md` para detalles sobre RLS, Auth y Storage.
-- Ver `docs/DEPLOYMENT.md` para despliegue en Vercel y Netlify.
-
-## Despliegue (Vercel / Netlify)
-- Configura las variables de entorno en la plataforma: `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
-- Asegúrate de que el bucket `reports` exista en Supabase y las políticas RLS/storage estén aplicadas.
-- Netlify usa `netlify.toml` y `_redirects` para SPA routing.
-- Vercel usa `vercel.json` para rewrite a `index.html`.
-
-## Comandos locales
 ```bash
+# Clonar el repositorio
+git clone https://github.com/JhonEdinsonBuitrago/sirea-web.git
+cd sirea-web
+
+# Instalar dependencias
 npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales de Supabase
+
+# Iniciar servidor de desarrollo
 npm run dev
 ```
 
+## Variables de entorno
+
+```env
+VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu_anon_key
+```
+
+## Scripts disponibles
+
+| Comando           | Descripción                         |
+| ----------------- | ----------------------------------- |
+| `npm run dev`     | Inicia el servidor de desarrollo    |
+| `npm run build`   | Genera la build de producción       |
+| `npm run preview` | Previsualiza la build de producción |
+
+## Estructura del proyecto
+
+```
+sirea-web/
+├── src/
+│   ├── components/     # Componentes reutilizables
+│   ├── context/        # Contexto de autenticación
+│   ├── hooks/          # Hooks personalizados
+│   ├── pages/          # Páginas de la aplicación
+│   │   ├── Admin/      # Panel administrativo
+│   │   ├── Auth/       # Login y registro
+│   │   └── Incidents/  # Reportes de incidentes
+│   ├── services/       # Servicios de Supabase
+│   ├── types/          # Tipos TypeScript
+│   └── utils/          # Utilidades
+├── sql/                # Scripts SQL para Supabase
+├── docs/               # Documentación técnica
+└── public/             # Recursos públicos
+```
+
+## Requerimientos funcionales implementados
+
+- **RF-01 al RF-04** — Autenticación con Supabase Auth (registro, login, logout)
+- **RF-05** — Formulario de reporte con foto, ubicación GPS y descripción
+- **RF-06 y RF-07** — Almacenamiento en Supabase con estructura completa
+- **RF-08** — Listado de incidentes con filtros y vista detallada
+- **RF-09** — Gestión de estados por administrador (Reportado → En proceso → Resuelto)
+- **RF-10** — Agrupación inteligente de incidentes duplicados
+- **RF-11** — Estadísticas por periodo con gráficas
+- **RF-12** — Exportación e impresión de estadísticas
+- **RF-13** — Notificaciones al usuario cuando cambia el estado de su reporte
+- **RF-14** — Notificaciones al administrador de nuevos incidentes
+
+## Despliegue en Vercel
+
+1. Conecta el repositorio en [vercel.com](https://sirea-web.vercel.app/)
+2. Configura las variables de entorno `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`
+3. Vercel detecta automáticamente la configuración de Vite
+
+## Base de datos
+
+Ejecutar los scripts SQL en el siguiente orden desde el SQL Editor de Supabase:
+
+1. `sql/schema.sql` — tablas principales y RLS
+2. `sql/notifications.sql` — sistema de notificaciones
+3. `sql/incident_grouping_schema.sql` — agrupación de incidentes RF-10
+4. `sql/rf10_setup_completo.sql` — configuración completa RF-10
+
+## Documentación adicional
+
+- `docs/ARCHITECTURE_AND_SECURITY.md` — arquitectura, RLS y seguridad
+- `docs/DEPLOYMENT.md` — guía de despliegue detallada
