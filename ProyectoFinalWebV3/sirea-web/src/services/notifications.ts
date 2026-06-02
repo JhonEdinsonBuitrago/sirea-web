@@ -50,17 +50,20 @@ export async function createNotification(
 }
 
 export async function markAsRead(notificationId: string): Promise<{ error: any }> {
-  const { error } = await supabase.rpc('mark_notification_as_read', {
-    notification_id: notificationId
-  });
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
 
   return { error };
 }
 
 export async function markAllAsRead(userId: string): Promise<{ error: any }> {
-  const { error } = await supabase.rpc('mark_all_notifications_as_read', {
-    current_user: userId
-  });
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', userId)
+    .eq('read', false);
 
   return { error };
 }
