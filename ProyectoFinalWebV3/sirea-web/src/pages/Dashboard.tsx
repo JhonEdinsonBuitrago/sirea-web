@@ -87,12 +87,17 @@ useEffect(() => {
         });
       }
     }
-    activities.push({
-      title: 'Perfil actualizado',
-      description: 'Cambió de correo institucional',
-      date: 'Hace 2 días',
-      icon: <UserCircle className="w-4 h-4" />
-    });
+    if (incidents.filter((item) => item.estado === 'en_proceso').length > 0) {
+      const inProcess = incidents.find((item) => item.estado === 'en_proceso');
+      if (inProcess) {
+        activities.push({
+          title: 'Incidente en proceso',
+          description: `${inProcess.titulo || inProcess.tipo}`,
+          date: inProcess.updated_at ? new Date(inProcess.updated_at).toLocaleString() : 'Recientemente',
+          icon: <UserCircle className="w-4 h-4" />
+        });
+      }
+    }
     return activities;
   }, [incidents]);
 
@@ -125,7 +130,7 @@ useEffect(() => {
                 <ListChecks className="w-6 h-6" />
               </div>
             </div>
-            <div className="mt-4 text-sm text-slate-500">{counts.total > 0 ? `${counts.total - 12}% vs last month` : 'Sin datos previos'}</div>
+            <div className="mt-4 text-sm text-slate-500">{counts.total > 0 ? `${counts.total} reporte${counts.total !== 1 ? 's' : ''} en total` : 'Sin datos previos'}</div>
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

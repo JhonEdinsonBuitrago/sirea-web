@@ -21,6 +21,7 @@ const COLORS = ['#0f766e', '#0284c7', '#0ea5e9', '#f97316', '#14b8a6'];
 export default function Statistics() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState<7 | 30 | 90>(7);
 const { user, profile } = useAuth();
 
 useEffect(() => {
@@ -51,14 +52,20 @@ useEffect(() => {
   })();
 }, [user, profile]);
 
+  const filteredByPeriod = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - period);
+    return incidents.filter((incident) => new Date(incident.created_at || '') >= cutoff);
+  }, [incidents, period]);
+
   const resolvedCases = useMemo(
-    () => incidents.filter((incident) => incident.estado === 'resuelto').length,
-    [incidents]
+    () => filteredByPeriod.filter((incident) => incident.estado === 'resuelto').length,
+    [filteredByPeriod]
   );
 
   const pendingReview = useMemo(
-    () => incidents.filter((incident) => incident.estado === 'reportado').length,
-    [incidents]
+    () => filteredByPeriod.filter((incident) => incident.estado === 'reportado').length,
+    [filteredByPeriod]
   );
 
   const avgResolutionHours = useMemo(() => {
@@ -72,7 +79,7 @@ useEffect(() => {
     }, 0);
 
     return totalHours / resolved.length / 1000 / 60 / 60;
-  }, [incidents]);
+  }, [incidents, period]);
 
   const incidentTypes = useMemo(() => {
     const tipoLabels: Record<string, string> = {
@@ -83,17 +90,17 @@ useEffect(() => {
       otro: 'Otro'
     };
     const counts: Record<string, number> = {};
-    incidents.forEach((incident) => {
+    filteredByPeriod.forEach((incident) => {
       const key = (incident.tipo || 'otro').toLowerCase();
       const label = tipoLabels[key] ?? incident.tipo ?? 'Otros';
       counts[label] = (counts[label] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [incidents]);
+  }, [filteredByPeriod]);
 
   const statusData = useMemo(() => {
     const counts = { reportado: 0, en_proceso: 0, resuelto: 0 };
-    incidents.forEach((incident) => {
+    filteredByPeriod.forEach((incident) => {
       counts[incident.estado] = (counts[incident.estado] || 0) + 1;
     });
     return [
@@ -101,14 +108,14 @@ useEffect(() => {
       { name: 'En Proceso', value: counts.en_proceso },
       { name: 'Resuelto', value: counts.resuelto }
     ];
-  }, [incidents]);
+  }, [filteredByPeriod]);
 
   const volumeData = useMemo(() => {
     const buckets: Record<string, number> = {};
     const labels: string[] = [];
     const now = new Date();
 
-    for (let i = 6; i >= 0; i -= 1) {
+    for (let i = period - 1; i >= 0; i -= 1) {
       const date = new Date(now);
       date.setDate(now.getDate() - i);
       const label = date.toLocaleDateString('es-CO', { weekday: 'short' });
@@ -126,7 +133,7 @@ useEffect(() => {
       fecha: labels[index],
       incidentes: value
     }));
-  }, [incidents]);
+  }, [incidents, period]);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-50 px-4 py-6 sm:px-6 lg:px-10">
@@ -154,8 +161,8 @@ useEffect(() => {
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5 sm:rounded-[28px] sm:p-6">
               <p className="text-sm text-slate-500">Incidentes Totales</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900 sm:text-4xl">{loading ? '...' : incidents.length}</p>
-              <p className="mt-3 text-sm text-slate-500">Total de reportes creados</p>
+              <p className="mt-4 text-3xl font-semibold text-slate-900 sm:text-4xl">{loading ? '...' : filteredByPeriod.length}</p>
+              <p className="mt-3 text-sm text-slate-500">Total en los últimos {period} días</p>
             </div>
             <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-5 sm:rounded-[28px] sm:p-6">
               <p className="text-sm text-slate-500">Tiempo Medio de Resolución</p>
@@ -191,8 +198,16 @@ useEffect(() => {
                 <h2 className="text-xl font-semibold text-slate-900">Volumen de incidentes</h2>
                 <p className="mt-2 text-sm text-slate-500">Reporte semanal de la actividad de tus incidentes.</p>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-600">
-                7 Días
+              <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 p-1 text-sm text-slate-600">
+                {([7, 30, 90] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeriod(p)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${period === p ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    {p}d
+                  </button>
+                ))}
               </div>
             </div>
 

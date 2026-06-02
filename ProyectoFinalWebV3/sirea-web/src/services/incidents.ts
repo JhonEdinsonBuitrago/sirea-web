@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Incident } from '../types';
+import { fetchAdminIds, createNotification } from './notifications';
 
 export interface CreateIncidentPayload {
   usuario_id: string;
@@ -22,6 +23,7 @@ const incidentSelect = `
     status
   )
 `;
+
 export async function getAllIncidents(): Promise<{ data: Incident[] | null; error: any }> {
   const { data, error } = await supabase
     .from('incidents')
@@ -66,22 +68,66 @@ export async function getAllIncidents(): Promise<{ data: Incident[] | null; erro
 export async function createIncident(
   payload: CreateIncidentPayload
 ): Promise<{ data: Incident | null; error: any }> {
-  // Para crear reportes no necesitamos traer relaciones después del insert.
-  // Esto evita errores por relaciones/cache/RLS al momento de registrar el incidente.
   const { error } = await supabase
     .from('incidents')
     .insert([payload]);
+
+  if (!error) {
+    // RF-14: Notificar a todos los administradores del nuevo incidente
+    const { data: adminIds } = await fetchAdminIds();
+    if (adminIds && adminIds.length > 0) {
+      await Promise.allSettled(
+        adminIds.map((adminId) =>
+          createNotification({
+            user_id: adminId,
+            type: 'new_incident',
+            title: 'Nuevo incidente reportado',
+            message: `Se ha reportado un nuevo incidente de tipo "${payload.tipo}": ${payload.titulo}`,
+            read: false,
+            incident_id: null,
+            metadata: {}
+          })
+        )
+      );
+    }
+  }
 
   return { data: null, error };
 }
 
 export async function updateIncidentStatus(id: string, estado: string) {
+  // Primero obtenemos el incidente para saber a quién notificar
+  const { data: existing } = await supabase
+    .from('incidents')
+    .select('usuario_id, titulo, tipo')
+    .eq('id', id)
+    .maybeSingle();
+
   const { data, error } = await supabase
     .from('incidents')
     .update({ estado })
     .eq('id', id)
     .select(incidentSelect)
     .maybeSingle();
+
+  if (!error && existing) {
+    // RF-13: Notificar al usuario que reportó el incidente sobre el cambio de estado
+    const estadoLabel =
+      estado === 'resuelto' ? 'Resuelto' :
+      estado === 'en_proceso' ? 'En proceso' : 'Reportado';
+
+    const notifType = estado === 'resuelto' ? 'incident_resolved' : 'incident_updated';
+
+    await createNotification({
+      user_id: existing.usuario_id,
+      type: notifType,
+      title: 'Estado de tu reporte actualizado',
+      message: `Tu reporte "${existing.titulo || existing.tipo}" cambió a: ${estadoLabel}`,
+      read: false,
+      incident_id: id,
+      metadata: {}
+    }).catch(() => {});
+  }
 
   return { data, error };
 }
@@ -92,7 +138,7 @@ export async function groupIncidents(ids: string[]) {
   const { data, error } = await supabase
     .from('incidents')
     .update({ grupo_id: group_id })
-    .in('id', ids)
+    .in('ids', ids)
     .select(incidentSelect);
 
   return { data, error, group_id };
