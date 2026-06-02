@@ -99,7 +99,7 @@ export async function updateIncidentStatus(id: string, estado: string) {
   // Primero obtenemos el incidente para saber a quién notificar
   const { data: existing } = await supabase
     .from('incidents')
-    .select('usuario_id, titulo, tipo')
+    .select('usuario_id, titulo, tipo, grupo_id')
     .eq('id', id)
     .maybeSingle();
 
@@ -109,6 +109,20 @@ export async function updateIncidentStatus(id: string, estado: string) {
     .eq('id', id)
     .select(incidentSelect)
     .maybeSingle();
+
+  // Si el incidente pertenece a un grupo, sincronizar usando columna 'status'
+  if (!error && existing?.grupo_id) {
+    await supabase
+      .from('incident_groups')
+      .update({ status: estado })
+      .eq('id', existing.grupo_id);
+
+    // Sincronizar todos los incidentes del grupo
+    await supabase
+      .from('incidents')
+      .update({ estado })
+      .eq('grupo_id', existing.grupo_id);
+  }
 
   if (!error && existing) {
     // RF-13: Notificar al usuario que reportó el incidente sobre el cambio de estado
