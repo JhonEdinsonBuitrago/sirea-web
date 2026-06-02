@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { Building, Droplet, MapPin, Save, Shield, Sparkles, Zap, ArrowRight, UploadCloud } from 'lucide-react';
+import { Building, Droplet, MapPin, Save, Shield, Sparkles, Zap, ArrowRight, UploadCloud, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthProvider';
 import { createIncident } from '../../services/incidents';
 
@@ -295,8 +295,21 @@ export default function NewIncident() {
               </label>
 
               {file && (
-                <div className="mt-4 min-w-0 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                  Archivo seleccionado: <span className="break-all font-semibold">{file.name}</span>
+                <div className="mt-4 flex min-w-0 items-center justify-between gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <span className="break-all">
+                    Archivo seleccionado: <span className="font-semibold">{file.name}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    Eliminar
+                  </button>
                 </div>
               )}
             </section>
