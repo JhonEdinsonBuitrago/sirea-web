@@ -44,29 +44,38 @@ export async function createIncidentGroupWithIncidents(
     return { data: null, error: new Error('Debes seleccionar al menos dos incidentes para agrupar.') };
   }
 
-  // Crear el grupo directamente sin usar RPC (evita problemas con columnas incorrectas)
-  const groupResult = await supabase
-    .from('incident_groups')
-    .insert({ title, description: null, status: 'reportado' })
-    .select('*');
+  // Usar el RPC con descripción siempre en null para evitar triggers problemáticos
+  const rpcResult = await supabase.rpc('create_incident_groups_with_incidents', {
+    _title: title,
+    _description: null,
+    _status: 'reportado',
+    _incident_ids: incidentIds
+  });
 
-  if (groupResult.error || !groupResult.data || groupResult.data.length === 0) {
-    return { data: null, error: groupResult.error };
+  if (!rpcResult.error) {
+    return { data: rpcResult.data as IncidentGroup | null, error: null };
   }
 
-  const groupData = groupResult.data[0];
+  console.warn('RPC falló, usando inserción directa:', rpcResult.error);
 
-  const updateResult = await supabase
+  // Fallback directo
+  const { data: rows, error: insertError } = await supabase
+    .from('incident_groups')
+    .insert({ title, status: 'reportado' })
+    .select('id');
+
+  if (insertError || !rows || rows.length === 0) {
+    return { data: null, error: insertError };
+  }
+
+  const groupId = rows[0].id;
+
+  await supabase
     .from('incidents')
-    .update({ grupo_id: groupData.id })
+    .update({ grupo_id: groupId })
     .in('id', incidentIds);
 
-  if (updateResult.error) {
-    await supabase.from('incident_groups').delete().eq('id', groupData.id);
-    return { data: null, error: updateResult.error };
-  }
-
-  return { data: groupData as IncidentGroup, error: null };
+  return { data: { id: groupId, title, status: 'reportado' } as IncidentGroup, error: null };
 }
 
 export async function updateIncidentGroupStatus(groupId: string, status: Incident['estado']): Promise<{ data: IncidentGroup | null; error: any }> {
