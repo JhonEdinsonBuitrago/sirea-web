@@ -95,40 +95,63 @@ export async function createIncident(
   return { data: null, error };
 }
 
-export async function updateIncidentStatus(id: string, estado: string) {
-  // Primero obtenemos el incidente para saber a quién notificar
-  const { data: existing } = await supabase
+export async function updateIncidentStatus(id: string, estado: Incident['estado']) {
+  // 1. Buscar el incidente actual para saber si pertenece a un grupo.
+  const { data: existing, error: existingError } = await supabase
     .from('incidents')
-    .select('usuario_id, titulo, tipo, grupo_id')
+    .select('id, usuario_id, titulo, tipo, grupo_id')
     .eq('id', id)
     .maybeSingle();
 
+  if (existingError) {
+    return { data: null, error: existingError };
+  }
+
+  // 2. Actualizar el estado del incidente individual.
+  // OJO: la tabla incidents usa columna en español: estado.
   const { data, error } = await supabase
     .from('incidents')
-    .update({ estado })
+    .update({ estado: estado })
     .eq('id', id)
     .select(incidentSelect)
     .maybeSingle();
 
-  // Si el incidente pertenece a un grupo, sincronizar usando columna 'status'
-  if (!error && existing?.grupo_id) {
-    await supabase
+  if (error) {
+    return { data: null, error };
+  }
+
+  // 3. Si el incidente pertenece a un grupo, actualizar también el grupo.
+  if (existing?.grupo_id) {
+    // OJO: la tabla incident_groups usa columna en inglés: status.
+    const { error: groupError } = await supabase
       .from('incident_groups')
       .update({ status: estado })
       .eq('id', existing.grupo_id);
 
-    // Sincronizar todos los incidentes del grupo
-    await supabase
+    if (groupError) {
+      return { data, error: groupError };
+    }
+
+    // 4. Sincronizar todos los incidentes del mismo grupo.
+    
+    const { error: incidentsGroupError } = await supabase
       .from('incidents')
-      .update({ estado })
+      .update({ estado: estado })
       .eq('grupo_id', existing.grupo_id);
+
+    if (incidentsGroupError) {
+      return { data, error: incidentsGroupError };
+    }
   }
 
-  if (!error && existing) {
-    // RF-13: Notificar al usuario que reportó el incidente sobre el cambio de estado
+  // 5. Notificar al usuario que reportó el incidente.
+  if (existing) {
     const estadoLabel =
-      estado === 'resuelto' ? 'Resuelto' :
-      estado === 'en_proceso' ? 'En proceso' : 'Reportado';
+      estado === 'resuelto'
+        ? 'Resuelto'
+        : estado === 'en_proceso'
+          ? 'En proceso'
+          : 'Reportado';
 
     const notifType = estado === 'resuelto' ? 'incident_resolved' : 'incident_updated';
 
@@ -143,7 +166,7 @@ export async function updateIncidentStatus(id: string, estado: string) {
     }).catch(() => {});
   }
 
-  return { data, error };
+  return { data, error: null };
 }
 
 export async function groupIncidents(ids: string[]) {
