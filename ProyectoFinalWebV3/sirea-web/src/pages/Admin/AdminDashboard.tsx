@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('');
   const [groupModalOpen, setGroupModalOpen] = useState(false);
   const [groupTitle, setGroupTitle] = useState('');
-  const [groupDescription, setGroupDescription] = useState('');
+
 
   const {
     incidents, loading, saving, selected, selectedCount,
@@ -129,19 +129,19 @@ export default function AdminDashboard() {
   const handleOpenSuggestedGroup = (suggestion: SimilarIncidentPair) => {
     selectIncidents(suggestion.incidentIds);
     setGroupTitle(buildSuggestedTitle(suggestion));
-    setGroupDescription(buildSuggestedDescription(suggestion));
+
     setGroupModalOpen(true);
     setActiveTab('grupos');
   };
 
   const handleCreateGroup = async () => {
     if (!groupTitle.trim()) { toast.error('Ingresa un título para el grupo.'); return; }
-    const { error } = await createGroup(groupTitle.trim(), groupDescription.trim());
+    const { error } = await createGroup(groupTitle.trim(), '');
     if (error) { toast.error(error.message || 'Error creando el grupo.'); return; }
     toast.success('Grupo creado correctamente.');
     setGroupModalOpen(false);
     setGroupTitle('');
-    setGroupDescription('');
+   
   };
 
   const handleGroupStatusChange = async (groupId: string, status: Incident['estado']) => {
@@ -524,16 +524,7 @@ export default function AdminDashboard() {
                   className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
                 />
               </div>
-              <div>
-                <label className="text-sm font-semibold text-slate-700">Descripción</label>
-                <textarea
-                  value={groupDescription}
-                  onChange={(e) => setGroupDescription(e.target.value)}
-                  rows={3}
-                  placeholder="¿Por qué se agrupan estos incidentes?"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-                />
-              </div>
+
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Incidentes a agrupar</p>
                 <div className="space-y-2">

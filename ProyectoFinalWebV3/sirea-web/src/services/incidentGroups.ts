@@ -47,7 +47,7 @@ export async function createIncidentGroupWithIncidents(
   // Crear el grupo directamente sin usar RPC (evita problemas con columnas incorrectas)
   const groupResult = await supabase
     .from('incident_groups')
-    .insert({ title, description, status: 'reportado' })
+    .insert({ title, description: null, status: 'reportado' })
     .select('*');
 
   if (groupResult.error || !groupResult.data || groupResult.data.length === 0) {
